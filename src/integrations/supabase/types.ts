@@ -14,7 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      check_ins: {
+        Row: {
+          checked_in_at: string
+          comment: string | null
+          id: string
+          name: string
+          session_id: string
+          student_id: string
+        }
+        Insert: {
+          checked_in_at?: string
+          comment?: string | null
+          id?: string
+          name: string
+          session_id: string
+          student_id: string
+        }
+        Update: {
+          checked_in_at?: string
+          comment?: string | null
+          id?: string
+          name?: string
+          session_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          class_name: string
+          closed_at: string | null
+          code: string
+          id: string
+          opened_at: string
+        }
+        Insert: {
+          class_name?: string
+          closed_at?: string | null
+          code: string
+          id?: string
+          opened_at?: string
+        }
+        Update: {
+          class_name?: string
+          closed_at?: string | null
+          code?: string
+          id?: string
+          opened_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
