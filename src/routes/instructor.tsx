@@ -1,0 +1,459 @@
+import { createFileRoute } from "@tanstack/react-router";
+import {
+  useQueryClient,
+  useSuspenseQuery,
+  queryOptions,
+} from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import {
+  getActiveSession,
+  listSessions,
+  getSessionCheckIns,
+  openSession,
+  closeSession,
+  type Attendee,
+} from "@/lib/attendance.functions";
+
+const activeSessionQuery = queryOptions({
+  queryKey: ["active-session"],
+  queryFn: () => getActiveSession(),
+  refetchInterval: 4000,
+});
+
+const sessionsQuery = queryOptions({
+  queryKey: ["sessions"],
+  queryFn: () => listSessions(),
+});
+
+export const Route = createFileRoute("/instructor")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Instructor View — Senior Project 1 Attendance" },
+      {
+        name: "description",
+        content:
+          "Open a check-in session, share the link, watch attendance arrive live, and review past sessions.",
+      },
+      { property: "og:title", content: "Instructor View — Senior Project 1 Attendance" },
+      {
+        property: "og:description",
+        content: "Live attendance roster and session history for Senior Project 1.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: InstructorPage,
+});
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function toCsv(attendees: Attendee[]) {
+  const header = "Name,Student ID,Checked In,Comment";
+  const rows = attendees.map((a) => {
+    const time = new Date(a.checkedInAt).toLocaleString();
+    const esc = (v: string | null) =>
+      `"${(v ?? "").replace(/"/g, '""')}"`;
+    return [esc(a.name), esc(a.studentId), esc(time), esc(a.comment)].join(",");
+  });
+  return [header, ...rows].join("\n");
+}
+
+function downloadCsv(filename: string, csv: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function InstructorPage() {
+  const { data } = useSuspenseQuery(activeSessionQuery);
+  const { data: sessions } = useSuspenseQuery(sessionsQuery);
+  const [showQr, setShowQr] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              Attendance
+            </p>
+            <h1 className="font-display text-xl font-semibold text-foreground">
+              Senior Project 1
+            </h1>
+          </div>
+          <a
+            href="/"
+            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+          >
+            Student view
+          </a>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-5 py-8">
+        {data.session ? (
+          <ActiveSession
+            sessionId={data.session.id}
+            attendees={data.attendees}
+            showQr={showQr}
+            setShowQr={setShowQr}
+            copied={copied}
+            setCopied={setCopied}
+            onClosed={() => setExpandedId(null)}
+          />
+        ) : (
+          <NoSession />
+        )}
+
+        <PastSessions
+          sessions={sessions.filter((s) => s.id !== data.session?.id)}
+          expandedId={expandedId}
+          setExpandedId={setExpandedId}
+        />
+      </main>
+    </div>
+  );
+}
+
+function NoSession() {
+  const openFn = useServerFn(openSession);
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleOpen = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await openFn();
+      await queryClient.invalidateQueries({ queryKey: ["active-session"] });
+      await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+1    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-10 text-center">
+      <h2 className="font-display text-2xl font-semibold text-foreground">
+        No session is open
+      </h2>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+        Open today's session and share the check-in link with your students.
+        Their names appear here as they check in.
+      </p>
+      <button
+        onClick={handleOpen}
+        disabled={busy}
+        className="mt-6 rounded-xl bg-primary px-6 py-3.5 text-base font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
+      >
+        {busy ? "Opening…" : "Open today's session"}
+      </button>
+      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+    </div>
+  );
+}
+
+function ActiveSession({
+  sessionId,
+  attendees,
+  showQr,
+  setShowQr,
+  copied,
+  setCopied,
+  onClosed,
+}: {
+  sessionId: string;
+  attendees: Attendee[];
+  showQr: boolean;
+  setShowQr: (v: boolean) => void;
+  copied: boolean;
+  setCopied: (v: boolean) => void;
+  onClosed: () => void;
+}) {
+  const closeFn = useServerFn(closeSession);
+  const queryClient = useQueryClient();
+  const [closing, setClosing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const checkInUrl =
+    typeof window !== "undefined" ? window.location.origin + "/" : "/";
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(checkInUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  const handleExport = () =>
+    downloadCsv(
+      `senior-project-1-attendance-${new Date().toISOString().slice(0, 10)}.csv`,
+      toCsv(attendees)
+    );
+
+  const handleClose = async () => {
+    setClosing(true);
+    setError(null);
+    try {
+      await closeFn({ data: { sessionId } });
+      onClosed();
+      await queryClient.invalidateQueries({ queryKey: ["active-session"] });
+      await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setClosing(false);
+    }
+  };
+
+  return (
+    <section>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="font-display text-2xl font-semibold text-foreground">
+            Live check-in
+          </h2>
+          <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="inline-block size-2 rounded-full bg-primary animate-pulse" />
+            Open — students can check in
+          </p>
+        </div>
+        <div className="text-right">
+          <span className="font-display text-4xl font-semibold text-primary">
+            {attendees.length}
+          </span>
+          <span className="ml-1 text-sm text-muted-foreground">present</span>
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center">
+        <div className="min-w-0 flex-1">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            Check-in link
+          </p>
+          <p className="mt-1 truncate font-mono text-sm text-foreground">
+            {checkInUrl}
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <button
+            onClick={copyLink}
+            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110"
+          >
+            {copied ? "Copied!" : "Copy link"}
+          </button>
+          <button
+            onClick={() => setShowQr(!showQr)}
+            className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent"
+          >
+            {showQr ? "Hide QR" : "Show QR"}
+          </button>
+        </div>
+        {showQr && (
+          <div className="rounded-xl border border-border bg-background p-3">
+            <QRCodeSVG value={checkInUrl} size={112} />
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground">
+            Present now
+          </h3>
+          <button
+            onClick={handleExport}
+            disabled={attendees.length === 0}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+          >
+            Download CSV
+          </button>
+        </div>
+        {attendees.length === 0 ? (
+          <p className="px-5 py-10 text-center text-sm text-muted-foreground">
+            Nobody has checked in yet.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {attendees.map((a, i) => (
+              <li key={a.id} className="flex items-center gap-3 px-5 py-3">
+                <span className="w-6 shrink-0 font-mono text-xs text-muted-foreground">
+                  {i + 1}
+                </span>
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent font-mono text-xs font-semibold text-accent-foreground">
+                  {initials(a.name)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {a.name}
+                  </p>
+                  <p className="truncate font-mono text-xs text-muted-foreground">
+                    {a.studentId}
+                    {a.comment ? (
+                      <span className="font-sans"> · {a.comment}</span>
+                    ) : null}
+                  </p>
+                </div>
+                <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                  {formatTime(a.checkedInAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <button
+          onClick={handleClose}
+          disabled={closing}
+          className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:brightness-110 disabled:opacity-60"
+        >
+          {closing ? "Closing…" : "End session"}
+        </button>
+        <p className="text-xs text-muted-foreground">
+          Ending the session stops new check-ins and saves today's list to
+          history.
+        </p>
+      </div>
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+    </section>
+  );
+}
+
+function PastSessions({
+  sessions,
+  expandedId,
+  setExpandedId,
+}: {
+  sessions: { id: string; openedAt: string; closedAt: string | null; count: number }[];
+  expandedId: string | null;
+  setExpandedId: (id: string | null) => void;
+}) {
+  if (sessions.length === 0) return null;
+
+  return (
+    <section className="mt-10">
+      <h2 className="font-display text-xl font-semibold text-foreground">
+        Past sessions
+      </h2>
+      <div className="mt-4 space-y-2">
+        {sessions.map((s) => (
+          <div
+            key={s.id}
+            className="overflow-hidden rounded-2xl border border-border bg-card"
+          >
+            <button
+              onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}
+              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-accent/50"
+            >
+              <span className="text-sm font-medium text-foreground">
+                {formatDate(s.openedAt)}
+              </span>
+              <span className="font-mono text-xs text-muted-foreground">
+                {s.count} checked in ·{" "}
+                {s.closedAt ? `ended ${formatTime(s.closedAt)}` : "open"}
+              </span>
+            </button>
+            {expandedId === s.id && (
+              <SessionAttendees sessionId={s.id} />
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SessionAttendees({ sessionId }: { sessionId: string }) {
+  const query = queryOptions({
+    queryKey: ["session-check-ins", sessionId],
+    queryFn: () => getSessionCheckIns({ data: { sessionId } }),
+  });
+  const { data: attendees } = useSuspenseQuery(query);
+
+  return (
+    <div className="border-t border-border bg-background/50">
+      <div className="flex items-center justify-between px-5 py-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          Attendees
+        </span>
+        <button
+          onClick={() =>
+            downloadCsv(
+              `senior-project-1-${sessionId.slice(0, 8)}.csv`,
+              toCsv(attendees)
+            )
+          }
+          disabled={attendees.length === 0}
+          className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+        >
+          Download CSV
+        </button>
+      </div>
+      {attendees.length === 0 ? (
+        <p className="px-5 pb-5 text-sm text-muted-foreground">
+          No one checked in to this session.
+        </p>
+      ) : (
+        <ul className="divide-y divide-border px-5 pb-2">
+          {attendees.map((a) => (
+            <li key={a.id} className="flex items-center gap-3 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {a.name}
+                </p>
+                <p className="truncate font-mono text-xs text-muted-foreground">
+                  {a.studentId}
+                  {a.comment ? (
+                    <span className="font-sans"> · {a.comment}</span>
+                  ) : null}
+                </p>
+              </div>
+              <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                {formatTime(a.checkedInAt)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
