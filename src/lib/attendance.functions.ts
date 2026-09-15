@@ -215,3 +215,132 @@ export const getSessionCheckIns = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return (checkIns ?? []).map(mapAttendee);
   });
+
+export interface StudentStat {
+  studentId: string;
+  name: string;
+  attended: number;
+  rate: number;
+  lastAttended: string | null;
+  missedSessions: string[];
+}
+
+export interface TrendPoint {
+  key: string;
+  label: string;
+  present: number;
+  sessions: number;
+}
+
+export interface AttendanceStats {
+  totalSessions: number;
+  totalStudents: number;
+  averagePresent: number;
+  averageRate: number;
+  students: StudentStat[];
+  byDate: TrendPoint[];
+  byWeek: TrendPoint[];
+}
+
+function startOfWeekKey(iso: string) {
+  const d = new Date(iso);
+  const day = (d.getUTCDay() + 6) % 7; // Monday = 0
+  const monday = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - day)
+  );
+  return monday.toISOString().slice(0, 10);
+}
+
+export const getAttendanceStats = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const supabase = publicClient();
+    const { data: sessions, error: sErr } = await supabase
+      .from("sessions")
+      .select("id, opened_at")
+      .order("opened_at", { ascending: true });
+    if (sErr) throw new Error(sErr.message);
+    const { data: checkIns, error: cErr } = await supabase
+      .from("check_ins")
+      .select("session_id, name, student_id, checked_in_at");
+    if (cErr) throw new Error(cErr.message);
+
+    const sessionList = (sessions ?? []) as { id: string; opened_at: string }[];
+    const rows = (checkIns ?? []) as {
+      session_id: string;
+      name: string;
+      student_id: string;
+      checked_in_at: string;
+    }[];
+
+    const perSession = new Map<string, number>();
+    const students = new Map<
+      string,
+      { name: string; sessions: Set<string>; last: string | null }
+    >();
+
+    for (const r of rows) {
+      perSession.set(r.session_id, (perSession.get(r.session_id) ?? 0) + 1);
+      const entry = students.get(r.student_id) ?? {
+        name: r.name,
+        sessions: new Set<string>(),
+        last: null as string | null,
+      };
+      entry.name = r.name;
+      entry.sessions.add(r.session_id);
+      if (!entry.last || r.checked_in_at > entry.last) entry.last = r.checked_in_at;
+      students.set(r.student_id, entry);
+    }
+
+    const totalSessions = sessionList.length;
+    const sessionDateById = new Map(
+      sessionList.map((s) => [s.id, s.opened_at] as const)
+    );
+
+    const studentStats: StudentStat[] = [...students.entries()]
+      .map(([studentId, v]) => ({
+        studentId,
+        name: v.name,
+        attended: v.sessions.size,
+        rate: totalSessions ? v.sessions.size / totalSessions : 0,
+        lastAttended: v.last,
+        missedSessions: sessionList
+          .filter((s) => !v.sessions.has(s.id))
+          .map((s) => sessionDateById.get(s.id)!)
+          .filter(Boolean),
+      }))
+      .sort((a, b) => b.attended - a.attended || a.name.localeCompare(b.name));
+
+    const bucket = (
+      keyFn: (iso: string) => string
+    ): TrendPoint[] => {
+      const map = new Map<string, { present: number; sessions: number }>();
+      for (const s of sessionList) {
+        const k = keyFn(s.opened_at);
+        const e = map.get(k) ?? { present: 0, sessions: 0 };
+        e.sessions += 1;
+        e.present += perSession.get(s.id) ?? 0;
+        map.set(k, e);
+      }
+      return [...map.entries()]
+        .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+        .map(([key, v]) => ({ key, label: key, ...v }));
+    };
+
+    const byDate = bucket((iso) => iso.slice(0, 10));
+    const byWeek = bucket(startOfWeekKey);
+
+    const totalPresent = rows.length;
+    return {
+      totalSessions,
+      totalStudents: studentStats.length,
+      averagePresent: totalSessions ? totalPresent / totalSessions : 0,
+      averageRate:
+        studentStats.length
+          ? studentStats.reduce((a, s) => a + s.rate, 0) / studentStats.length
+          : 0,
+      students: studentStats,
+      byDate,
+      byWeek,
+    } satisfies AttendanceStats;
+  }
+);
