@@ -113,12 +113,20 @@ function InstructorPage() {
               Senior Project 1
             </h1>
           </div>
-          <a
-            href="/"
-            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
-          >
-            Student view
-          </a>
+          <div className="flex gap-2">
+            <a
+              href="/stats"
+              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+            >
+              Stats
+            </a>
+            <a
+              href="/"
+              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+            >
+              Student view
+            </a>
+          </div>
         </div>
       </header>
 
