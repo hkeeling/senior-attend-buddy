@@ -162,7 +162,7 @@ function NoSession() {
       await queryClient.invalidateQueries({ queryKey: ["sessions"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
-1    } finally {
+} finally {
       setBusy(false);
     }
   };
