@@ -126,31 +126,31 @@ function StatsPage() {
                 <BarChart data={points}>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="hsl(var(--border))"
+                    stroke="var(--border)"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="label"
                     tick={{ fontSize: 11 }}
-                    stroke="hsl(var(--muted-foreground))"
+                    stroke="var(--muted-foreground)"
                   />
                   <YAxis
                     allowDecimals={false}
                     tick={{ fontSize: 11 }}
-                    stroke="hsl(var(--muted-foreground))"
+                    stroke="var(--muted-foreground)"
                   />
                   <Tooltip
                     contentStyle={{
                       borderRadius: 12,
-                      border: "1px solid hsl(var(--border))",
-                      background: "hsl(var(--card))",
+                      border: "1px solid var(--border)",
+                      background: "var(--card)",
                       fontSize: 12,
                     }}
                     formatter={(v: number) => [String(v), "Check-ins"]}
                   />
                   <Bar
                     dataKey="present"
-                    fill="hsl(var(--primary))"
+                    fill="var(--primary)"
                     radius={[6, 6, 0, 0]}
                   />
                 </BarChart>
