@@ -238,3 +238,49 @@ function CheckInForm({
     </form>
   );
 }
+
+function AdminUnlock({ className }: { className?: string }) {
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (isAdminName(name)) {
+          navigate({ to: "/instructor" });
+          return;
+        }
+        setError("Check-in isn't open yet — please wait for your instructor.");
+      }}
+      className={`border-t border-border pt-6 text-left ${className ?? ""}`}
+    >
+      <label className="block">
+        <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+          Full name
+        </span>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Jane Doe"
+          maxLength={80}
+          autoComplete="name"
+          className="w-full rounded-xl border border-input bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground/70 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+        />
+      </label>
+      {error && (
+        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <button
+        type="submit"
+        className="mt-4 w-full rounded-xl bg-primary px-4 py-4 text-base font-semibold text-primary-foreground transition hover:brightness-110 active:scale-[0.99]"
+      >
+        I'm here
+      </button>
+    </form>
+  );
+}
