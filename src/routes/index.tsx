@@ -1,14 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { getActiveSession, checkIn, type Attendee } from "@/lib/attendance.functions";
+
+const ADMIN_NAME = "harry keeling";
+
+function isAdminName(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase() === ADMIN_NAME;
+}
 
 const activeSessionQuery = queryOptions({
   queryKey: ["active-session"],
   queryFn: () => getActiveSession(),
   refetchInterval: 8000,
 });
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
