@@ -13,8 +13,10 @@ import {
   getSessionCheckIns,
   openSession,
   closeSession,
+  CLASS_OPTIONS,
   type Attendee,
 } from "@/lib/attendance.functions";
+
 
 const activeSessionQuery = queryOptions({
   queryKey: ["active-session"],
@@ -134,6 +136,8 @@ function InstructorPage() {
         {data.session ? (
           <ActiveSession
             sessionId={data.session.id}
+            className={data.session.className}
+            openedAt={data.session.openedAt}
             attendees={data.attendees}
             showQr={showQr}
             setShowQr={setShowQr}
@@ -150,6 +154,7 @@ function InstructorPage() {
           expandedId={expandedId}
           setExpandedId={setExpandedId}
         />
+
       </main>
     </div>
   );
@@ -160,17 +165,18 @@ function NoSession() {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [className, setClassName] = useState<string>(CLASS_OPTIONS[0].name);
 
   const handleOpen = async () => {
     setBusy(true);
     setError(null);
     try {
-      await openFn();
+      await openFn({ data: { className } });
       await queryClient.invalidateQueries({ queryKey: ["active-session"] });
       await queryClient.invalidateQueries({ queryKey: ["sessions"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
-} finally {
+    } finally {
       setBusy(false);
     }
   };
@@ -181,23 +187,46 @@ function NoSession() {
         No session is open
       </h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-        Open today's session and share the check-in link with your students.
-        Their names appear here as they check in.
+        Pick the class, open the session, and share the check-in link with your
+        students. Their names appear here as they check in.
       </p>
+      <div className="mx-auto mt-6 max-w-sm text-left">
+        <label
+          htmlFor="class-select"
+          className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+        >
+          Class
+        </label>
+        <select
+          id="class-select"
+          value={className}
+          onChange={(e) => setClassName(e.target.value)}
+          className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground"
+        >
+          {CLASS_OPTIONS.map((c) => (
+            <option key={c.code} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <button
         onClick={handleOpen}
         disabled={busy}
-        className="mt-6 rounded-xl bg-primary px-6 py-3.5 text-base font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
+        className="mt-5 rounded-xl bg-primary px-6 py-3.5 text-base font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
       >
-        {busy ? "Opening…" : "Open today's session"}
+        {busy ? "Opening…" : "Open session"}
       </button>
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
     </div>
   );
 }
 
+
 function ActiveSession({
   sessionId,
+  className,
+  openedAt,
   attendees,
   showQr,
   setShowQr,
@@ -206,6 +235,8 @@ function ActiveSession({
   onClosed,
 }: {
   sessionId: string;
+  className: string;
+  openedAt: string;
   attendees: Attendee[];
   showQr: boolean;
   setShowQr: (v: boolean) => void;
@@ -217,6 +248,9 @@ function ActiveSession({
   const queryClient = useQueryClient();
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [closeDate, setCloseDate] = useState(() =>
+    new Date(openedAt).toLocaleDateString("en-CA")
+  );
 
   const checkInUrl =
     typeof window !== "undefined" ? window.location.origin + "/" : "/";
@@ -233,7 +267,7 @@ function ActiveSession({
 
   const handleExport = () =>
     downloadCsv(
-      `senior-project-1-attendance-${new Date().toISOString().slice(0, 10)}.csv`,
+      `${className.replace(/\s+/g, "-").toLowerCase()}-attendance-${new Date().toISOString().slice(0, 10)}.csv`,
       toCsv(attendees)
     );
 
@@ -241,7 +275,20 @@ function ActiveSession({
     setClosing(true);
     setError(null);
     try {
-      await closeFn({ data: { sessionId } });
+      const now = new Date();
+      const stamp = new Date(
+        `${closeDate}T${String(now.getHours()).padStart(2, "0")}:${String(
+          now.getMinutes()
+        ).padStart(2, "0")}:00`
+      );
+      if (Number.isNaN(stamp.getTime())) {
+        setError("Please enter a valid date.");
+        setClosing(false);
+        return;
+      }
+      await closeFn({
+        data: { sessionId, closedAt: stamp.toISOString() },
+      });
       onClosed();
       await queryClient.invalidateQueries({ queryKey: ["active-session"] });
       await queryClient.invalidateQueries({ queryKey: ["sessions"] });
@@ -256,11 +303,11 @@ function ActiveSession({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="font-display text-2xl font-semibold text-foreground">
-            Live check-in
+            {className}
           </h2>
           <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
             <span className="inline-block size-2 rounded-full bg-primary animate-pulse" />
-            Open — students can check in
+            Open since {formatDate(openedAt)} · students can check in
           </p>
         </div>
         <div className="text-right">
@@ -270,6 +317,7 @@ function ActiveSession({
           <span className="ml-1 text-sm text-muted-foreground">present</span>
         </div>
       </div>
+
 
       <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
@@ -348,7 +396,22 @@ function ActiveSession({
         )}
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className="mt-5 flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
+        <div>
+          <label
+            htmlFor="close-date"
+            className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+          >
+            Class date
+          </label>
+          <input
+            id="close-date"
+            type="date"
+            value={closeDate}
+            onChange={(e) => setCloseDate(e.target.value)}
+            className="mt-1.5 block rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground"
+          />
+        </div>
         <button
           onClick={handleClose}
           disabled={closing}
@@ -356,11 +419,12 @@ function ActiveSession({
         >
           {closing ? "Closing…" : "End session"}
         </button>
-        <p className="text-xs text-muted-foreground">
-          Ending the session stops new check-ins and saves today's list to
-          history.
+        <p className="w-full text-xs text-muted-foreground sm:w-auto sm:flex-1">
+          Ending the session stops new check-ins and files today's list in
+          history under the date above.
         </p>
       </div>
+
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
     </section>
   );
@@ -371,44 +435,78 @@ function PastSessions({
   expandedId,
   setExpandedId,
 }: {
-  sessions: { id: string; openedAt: string; closedAt: string | null; count: number }[];
+  sessions: {
+    id: string;
+    className: string;
+    openedAt: string;
+    closedAt: string | null;
+    count: number;
+  }[];
   expandedId: string | null;
   setExpandedId: (id: string | null) => void;
 }) {
+  const [filter, setFilter] = useState<string>("all");
   if (sessions.length === 0) return null;
+  const visible =
+    filter === "all" ? sessions : sessions.filter((s) => s.className === filter);
 
   return (
     <section className="mt-10">
-      <h2 className="font-display text-xl font-semibold text-foreground">
-        Past sessions
-      </h2>
-      <div className="mt-4 space-y-2">
-        {sessions.map((s) => (
-          <div
-            key={s.id}
-            className="overflow-hidden rounded-2xl border border-border bg-card"
-          >
-            <button
-              onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-accent/50"
-            >
-              <span className="text-sm font-medium text-foreground">
-                {formatDate(s.openedAt)}
-              </span>
-              <span className="font-mono text-xs text-muted-foreground">
-                {s.count} checked in ·{" "}
-                {s.closedAt ? `ended ${formatTime(s.closedAt)}` : "open"}
-              </span>
-            </button>
-            {expandedId === s.id && (
-              <SessionAttendees sessionId={s.id} />
-            )}
-          </div>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-semibold text-foreground">
+          Past sessions
+        </h2>
+        <select
+          value={filter}
+          aria-label="Filter past sessions by class"
+          onChange={(e) => setFilter(e.target.value)}
+          className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
+        >
+          <option value="all">All classes</option>
+          {CLASS_OPTIONS.map((c) => (
+            <option key={c.code} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+        </select>
       </div>
+      {visible.length === 0 ? (
+        <p className="mt-4 rounded-2xl border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
+          No past sessions for this class yet.
+        </p>
+      ) : (
+        <div className="mt-4 space-y-2">
+          {visible.map((s) => (
+            <div
+              key={s.id}
+              className="overflow-hidden rounded-2xl border border-border bg-card"
+            >
+              <button
+                onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-accent/50"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-foreground">
+                    {formatDate(s.closedAt ?? s.openedAt)}
+                  </span>
+                  <span className="block truncate font-mono text-xs text-muted-foreground">
+                    {s.className}
+                  </span>
+                </span>
+                <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                  {s.count} checked in ·{" "}
+                  {s.closedAt ? `ended ${formatTime(s.closedAt)}` : "open"}
+                </span>
+              </button>
+              {expandedId === s.id && <SessionAttendees sessionId={s.id} />}
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
+
 
 function SessionAttendees({ sessionId }: { sessionId: string }) {
   const query = queryOptions({
