@@ -105,26 +105,45 @@ export const getActiveSession = createServerFn({ method: "GET" }).handler(
   }
 );
 
-export const openSession = createServerFn({ method: "POST" }).handler(
-  async () => {
+export const CLASS_OPTIONS = [
+  { code: "CSCI 491", name: "CSCI 491 - Senior Project I" },
+  { code: "CSCI 492", name: "CSCI 492 - Senior Project II" },
+] as const;
+
+const classNames = CLASS_OPTIONS.map((c) => c.name) as unknown as [
+  string,
+  ...string[],
+];
+
+export const openSession = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z
+      .object({ className: z.enum(classNames).default(classNames[0]) })
+      .parse(input ?? {})
+  )
+  .handler(async ({ data }) => {
     const supabase = publicClient();
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = Math.random().toString(36).slice(2, 8).toUpperCase();
-      const { data, error } = await supabase
+      const { data: row, error } = await supabase
         .from("sessions")
-        .insert({ code, class_name: "Senior Project 1" })
+        .insert({ code, class_name: data.className })
         .select("id, code, class_name, opened_at, closed_at")
         .single();
-      if (!error) return mapSession(data as DbSession);
+      if (!error) return mapSession(row as DbSession);
       if (error.code !== "23505") throw new Error(error.message);
     }
     throw new Error("Could not open a session, please try again.");
-  }
-);
+  });
 
 export const closeSession = createServerFn({ method: "POST" })
   .inputValidator((input) =>
-    z.object({ sessionId: z.string().uuid() }).parse(input)
+    z
+      .object({
+        sessionId: z.string().uuid(),
+        closedAt: z.string().datetime().optional(),
+      })
+      .parse(input)
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import(
@@ -132,11 +151,12 @@ export const closeSession = createServerFn({ method: "POST" })
     );
     const { error } = await supabaseAdmin
       .from("sessions")
-      .update({ closed_at: new Date().toISOString() })
+      .update({ closed_at: data.closedAt ?? new Date().toISOString() })
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 const checkInSchema = z.object({
   sessionId: z.string().uuid(),
