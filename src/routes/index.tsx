@@ -81,7 +81,9 @@ function CheckInPage() {
             >
               Refresh
             </a>
+            <AdminUnlock className="mt-8" />
           </div>
+
         )}
         <p className="mt-8 text-center text-xs text-muted-foreground">
           No account needed — your name and ID are only used for attendance.
