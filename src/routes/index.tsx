@@ -139,10 +139,15 @@ function CheckInForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAdminName(name)) {
+      navigate({ to: "/instructor" });
+      return;
+    }
     if (!name.trim() || !studentId.trim()) {
       setError("Please fill in your name and student ID.");
       return;
     }
+
     setSubmitting(true);
     setError(null);
     try {
