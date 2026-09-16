@@ -101,7 +101,9 @@ function CheckInForm({
   className?: string;
 }) {
   const checkInFn = useServerFn(checkIn);
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
   const [comment, setComment] = useState("");
