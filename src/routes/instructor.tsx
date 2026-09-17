@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
 import {
   getActiveSession,
@@ -99,8 +100,6 @@ function initials(name: string) {
 function InstructorPage() {
   const { data } = useSuspenseQuery(activeSessionQuery);
   const { data: sessions } = useSuspenseQuery(sessionsQuery);
-  const [showQr, setShowQr] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
@@ -109,7 +108,7 @@ function InstructorPage() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-              {data.session?.className ?? "Attendance"}
+              Attendance
             </p>
             <h1 className="font-display text-xl font-semibold text-foreground">
               Admin Dashboard
@@ -133,31 +132,16 @@ function InstructorPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-5 py-8">
-        <CourseOverview
-          sessions={sessions}
-          activeSessionId={data.session?.id ?? null}
-          activeClassName={data.session?.className ?? null}
-        />
-
-        {data.session ? (
-          <ActiveSession
-            sessionId={data.session.id}
-            code={data.session.code}
-            className={data.session.className}
-            openedAt={data.session.openedAt}
-            attendees={data.attendees}
-            showQr={showQr}
-            setShowQr={setShowQr}
-            copied={copied}
-            setCopied={setCopied}
-            onClosed={() => setExpandedId(null)}
-          />
-        ) : (
-          <NoSession />
-        )}
+        <CourseOverview sessions={sessions} activeClassNames={data.sessions.map(({ session }) => session.className)} />
+        {data.sessions.map(({ session, attendees }) => (
+          <ActiveSession key={session.id} sessionId={session.id} code={session.code}
+            className={session.className} openedAt={session.openedAt}
+            attendees={attendees} onClosed={() => setExpandedId(null)} />
+        ))}
+        {data.sessions.length === 0 && <NoSession />}
 
         <PastSessions
-          sessions={sessions.filter((s) => s.id !== data.session?.id)}
+          sessions={sessions.filter((s) => s.closedAt !== null)}
           expandedId={expandedId}
           setExpandedId={setExpandedId}
         />
@@ -169,8 +153,7 @@ function InstructorPage() {
 
 function CourseOverview({
   sessions,
-  activeSessionId,
-  activeClassName,
+  activeClassNames,
 }: {
   sessions: {
     id: string;
@@ -179,14 +162,11 @@ function CourseOverview({
     closedAt: string | null;
     count: number;
   }[];
-  activeSessionId: string | null;
-  activeClassName: string | null;
+  activeClassNames: string[];
 }) {
   const openFn = useServerFn(openSession);
-  const closeFn = useServerFn(closeSession);
   const queryClient = useQueryClient();
   const [busyClass, setBusyClass] = useState<string | null>(null);
-  const [endingNow, setEndingNow] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
@@ -194,27 +174,10 @@ function CourseOverview({
     await queryClient.invalidateQueries({ queryKey: ["sessions"] });
   };
 
-  const handleEndCurrent = async () => {
-    if (!activeSessionId) return;
-    setEndingNow(true);
-    setError(null);
-    try {
-      await closeFn({ data: { sessionId: activeSessionId } });
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setEndingNow(false);
-    }
-  };
-
   const handleOpen = async (className: string) => {
     setBusyClass(className);
     setError(null);
     try {
-      if (activeSessionId) {
-        await closeFn({ data: { sessionId: activeSessionId } });
-      }
       await openFn({ data: { className } });
       await refresh();
     } catch (err) {
@@ -230,23 +193,15 @@ function CourseOverview({
         <h2 className="font-display text-xl font-semibold text-foreground">
           Your courses
         </h2>
-        {activeSessionId && (
-          <button
-            onClick={handleEndCurrent}
-            disabled={endingNow || busyClass !== null}
-            className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-60"
-          >
-            {endingNow ? "Ending…" : "End current session"}
-          </button>
-        )}
+
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {CLASS_OPTIONS.map((c) => {
           const mine = sessions.filter((s) => s.className === c.name);
-          const past = mine.filter((s) => s.id !== activeSessionId);
+          const past = mine.filter((s) => s.closedAt !== null);
           const totalPresent = mine.reduce((a, s) => a + s.count, 0);
           const last = past[0];
-          const isActive = activeClassName === c.name;
+          const isActive = activeClassNames.includes(c.name);
           return (
             <div
               key={c.code}
@@ -272,27 +227,21 @@ function CourseOverview({
                 {totalPresent} check-in{totalPresent === 1 ? "" : "s"}
                 {last ? ` · last ${formatDate(last.closedAt ?? last.openedAt)}` : ""}
               </p>
-              <button
+              <Button
                 onClick={() => handleOpen(c.name)}
-                disabled={busyClass !== null || endingNow}
+                disabled={busyClass !== null || isActive}
                 className="mt-4 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110 disabled:opacity-60"
               >
                 {busyClass === c.name
                   ? "Opening…"
-                  : activeSessionId
-                    ? "End current & start new session"
+                  : isActive
+                    ? "Session already open"
                     : "Open a session"}
-              </button>
+              </Button>
             </div>
           );
         })}
       </div>
-      {activeSessionId && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          Starting a session for a course ends the one that is live now and
-          files it in history.
-        </p>
-      )}
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
     </section>
   );
@@ -368,10 +317,6 @@ function ActiveSession({
   className,
   openedAt,
   attendees,
-  showQr,
-  setShowQr,
-  copied,
-  setCopied,
   onClosed,
 }: {
   sessionId: string;
@@ -379,12 +324,10 @@ function ActiveSession({
   className: string;
   openedAt: string;
   attendees: Attendee[];
-  showQr: boolean;
-  setShowQr: (v: boolean) => void;
-  copied: boolean;
-  setCopied: (v: boolean) => void;
   onClosed: () => void;
 }) {
+  const [showQr, setShowQr] = useState(false);
+  const [copied, setCopied] = useState(false);
   const closeFn = useServerFn(closeSession);
   const queryClient = useQueryClient();
   const [closing, setClosing] = useState(false);
@@ -442,7 +385,7 @@ function ActiveSession({
   };
 
   return (
-    <section>
+    <section className="mb-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="font-display text-2xl font-semibold text-foreground">
@@ -542,13 +485,13 @@ function ActiveSession({
       <div className="mt-5 flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
         <div>
           <label
-            htmlFor="close-date"
+            htmlFor={`close-date-${sessionId}`}
             className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
           >
             Class date
           </label>
           <input
-            id="close-date"
+            id={`close-date-${sessionId}`}
             type="date"
             value={closeDate}
             onChange={(e) => setCloseDate(e.target.value)}
