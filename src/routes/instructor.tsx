@@ -33,13 +33,13 @@ export const Route = createFileRoute("/instructor")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Instructor View — Senior Project 1 Attendance" },
+      { title: "Admin Dashboard — Course Attendance" },
       {
         name: "description",
         content:
           "Open a check-in session, share the link, watch attendance arrive live, and review past sessions.",
       },
-      { property: "og:title", content: "Instructor View — Senior Project 1 Attendance" },
+      { property: "og:title", content: "Admin Dashboard — Course Attendance" },
       {
         property: "og:description",
         content: "Live attendance roster and session history for Senior Project 1.",
@@ -109,10 +109,10 @@ function InstructorPage() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-              Attendance
+              {data.session?.className ?? "Attendance"}
             </p>
             <h1 className="font-display text-xl font-semibold text-foreground">
-              {data.session?.className ?? "Courses"}
+              Admin Dashboard
             </h1>
           </div>
           <div className="flex gap-2">
@@ -182,17 +182,40 @@ function CourseOverview({
   activeClassName: string | null;
 }) {
   const openFn = useServerFn(openSession);
+  const closeFn = useServerFn(closeSession);
   const queryClient = useQueryClient();
   const [busyClass, setBusyClass] = useState<string | null>(null);
+  const [endingNow, setEndingNow] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const refresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["active-session"] });
+    await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+  };
+
+  const handleEndCurrent = async () => {
+    if (!activeSessionId) return;
+    setEndingNow(true);
+    setError(null);
+    try {
+      await closeFn({ data: { sessionId: activeSessionId } });
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setEndingNow(false);
+    }
+  };
 
   const handleOpen = async (className: string) => {
     setBusyClass(className);
     setError(null);
     try {
+      if (activeSessionId) {
+        await closeFn({ data: { sessionId: activeSessionId } });
+      }
       await openFn({ data: { className } });
-      await queryClient.invalidateQueries({ queryKey: ["active-session"] });
-      await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -202,9 +225,20 @@ function CourseOverview({
 
   return (
     <section className="mb-8">
-      <h2 className="font-display text-xl font-semibold text-foreground">
-        Your courses
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-semibold text-foreground">
+          Your courses
+        </h2>
+        {activeSessionId && (
+          <button
+            onClick={handleEndCurrent}
+            disabled={endingNow || busyClass !== null}
+            className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+          >
+            {endingNow ? "Ending…" : "End current session"}
+          </button>
+        )}
+      </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {CLASS_OPTIONS.map((c) => {
           const mine = sessions.filter((s) => s.className === c.name);
@@ -237,24 +271,27 @@ function CourseOverview({
                 {totalPresent} check-in{totalPresent === 1 ? "" : "s"}
                 {last ? ` · last ${formatDate(last.closedAt ?? last.openedAt)}` : ""}
               </p>
-              {!activeSessionId && (
-                <button
-                  onClick={() => handleOpen(c.name)}
-                  disabled={busyClass !== null}
-                  className="mt-4 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110 disabled:opacity-60"
-                >
-                  {busyClass === c.name ? "Opening…" : "Open a session"}
-                </button>
-              )}
-              {activeSessionId && !isActive && (
-                <p className="mt-4 text-xs text-muted-foreground">
-                  End the live session to open one for this course.
-                </p>
-              )}
+              <button
+                onClick={() => handleOpen(c.name)}
+                disabled={busyClass !== null || endingNow}
+                className="mt-4 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110 disabled:opacity-60"
+              >
+                {busyClass === c.name
+                  ? "Opening…"
+                  : activeSessionId
+                    ? "End current & start new session"
+                    : "Open a session"}
+              </button>
             </div>
           );
         })}
       </div>
+      {activeSessionId && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Starting a session for a course ends the one that is live now and
+          files it in history.
+        </p>
+      )}
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
     </section>
   );
