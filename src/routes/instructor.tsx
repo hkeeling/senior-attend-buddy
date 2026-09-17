@@ -112,7 +112,7 @@ function InstructorPage() {
               Attendance
             </p>
             <h1 className="font-display text-xl font-semibold text-foreground">
-              Senior Project 1
+              {data.session?.className ?? "Courses"}
             </h1>
           </div>
           <div className="flex gap-2">
@@ -133,6 +133,12 @@ function InstructorPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-5 py-8">
+        <CourseOverview
+          sessions={sessions}
+          activeSessionId={data.session?.id ?? null}
+          activeClassName={data.session?.className ?? null}
+        />
+
         {data.session ? (
           <ActiveSession
             sessionId={data.session.id}
@@ -159,6 +165,101 @@ function InstructorPage() {
     </div>
   );
 }
+
+function CourseOverview({
+  sessions,
+  activeSessionId,
+  activeClassName,
+}: {
+  sessions: {
+    id: string;
+    className: string;
+    openedAt: string;
+    closedAt: string | null;
+    count: number;
+  }[];
+  activeSessionId: string | null;
+  activeClassName: string | null;
+}) {
+  const openFn = useServerFn(openSession);
+  const queryClient = useQueryClient();
+  const [busyClass, setBusyClass] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleOpen = async (className: string) => {
+    setBusyClass(className);
+    setError(null);
+    try {
+      await openFn({ data: { className } });
+      await queryClient.invalidateQueries({ queryKey: ["active-session"] });
+      await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusyClass(null);
+    }
+  };
+
+  return (
+    <section className="mb-8">
+      <h2 className="font-display text-xl font-semibold text-foreground">
+        Your courses
+      </h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {CLASS_OPTIONS.map((c) => {
+          const mine = sessions.filter((s) => s.className === c.name);
+          const past = mine.filter((s) => s.id !== activeSessionId);
+          const totalPresent = mine.reduce((a, s) => a + s.count, 0);
+          const last = past[0];
+          const isActive = activeClassName === c.name;
+          return (
+            <div
+              key={c.code}
+              className="rounded-2xl border border-border bg-card p-5"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {c.code}
+                  </p>
+                  <h3 className="mt-1 font-display text-lg font-semibold text-foreground">
+                    {c.name.replace(`${c.code} - `, "")}
+                  </h3>
+                </div>
+                {isActive && (
+                  <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+                    Live
+                  </span>
+                )}
+              </div>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {mine.length} session{mine.length === 1 ? "" : "s"} ·{" "}
+                {totalPresent} check-in{totalPresent === 1 ? "" : "s"}
+                {last ? ` · last ${formatDate(last.closedAt ?? last.openedAt)}` : ""}
+              </p>
+              {!activeSessionId && (
+                <button
+                  onClick={() => handleOpen(c.name)}
+                  disabled={busyClass !== null}
+                  className="mt-4 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110 disabled:opacity-60"
+                >
+                  {busyClass === c.name ? "Opening…" : "Open a session"}
+                </button>
+              )}
+              {activeSessionId && !isActive && (
+                <p className="mt-4 text-xs text-muted-foreground">
+                  End the live session to open one for this course.
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+    </section>
+  );
+}
+
 
 function NoSession() {
   const openFn = useServerFn(openSession);
