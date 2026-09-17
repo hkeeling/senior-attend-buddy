@@ -364,6 +364,7 @@ function NoSession() {
 
 function ActiveSession({
   sessionId,
+  code,
   className,
   openedAt,
   attendees,
