@@ -394,7 +394,9 @@ function ActiveSession({
   );
 
   const checkInUrl =
-    typeof window !== "undefined" ? window.location.origin + "/" : "/";
+    typeof window !== "undefined"
+      ? `${window.location.origin}/s/${code}`
+      : `/s/${code}`;
 
   const copyLink = async () => {
     try {
