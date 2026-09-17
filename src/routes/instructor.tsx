@@ -33,7 +33,7 @@ export const Route = createFileRoute("/instructor")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Instructor View — Senior Project 1 Attendance" },
+      { title: "Admin Dashboard — Course Attendance" },
       {
         name: "description",
         content:
