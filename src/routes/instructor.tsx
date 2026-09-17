@@ -133,6 +133,12 @@ function InstructorPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-5 py-8">
+        <CourseOverview
+          sessions={sessions}
+          activeSessionId={data.session?.id ?? null}
+          activeClassName={data.session?.className ?? null}
+        />
+
         {data.session ? (
           <ActiveSession
             sessionId={data.session.id}
