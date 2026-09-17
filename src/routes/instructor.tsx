@@ -375,6 +375,7 @@ function ActiveSession({
   onClosed,
 }: {
   sessionId: string;
+  code: string;
   className: string;
   openedAt: string;
   attendees: Attendee[];
