@@ -39,7 +39,7 @@ export const Route = createFileRoute("/instructor")({
         content:
           "Open a check-in session, share the link, watch attendance arrive live, and review past sessions.",
       },
-      { property: "og:title", content: "Instructor View — Senior Project 1 Attendance" },
+      { property: "og:title", content: "Admin Dashboard — Course Attendance" },
       {
         property: "og:description",
         content: "Live attendance roster and session history for Senior Project 1.",
