@@ -112,7 +112,7 @@ function InstructorPage() {
               Attendance
             </p>
             <h1 className="font-display text-xl font-semibold text-foreground">
-              Senior Project 1
+              {data.session?.className ?? "Courses"}
             </h1>
           </div>
           <div className="flex gap-2">
