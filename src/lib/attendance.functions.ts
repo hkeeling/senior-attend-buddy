@@ -105,6 +105,22 @@ export const getActiveSession = createServerFn({ method: "GET" }).handler(
   }
 );
 
+export const getSessionByCode = createServerFn({ method: "GET" })
+  .inputValidator((input) =>
+    z.object({ code: z.string().trim().min(1).max(12) }).parse(input)
+  )
+  .handler(async ({ data }) => {
+    const supabase = publicClient();
+    const { data: session, error } = await supabase
+      .from("sessions")
+      .select("id, code, class_name, opened_at, closed_at")
+      .eq("code", data.code.toUpperCase())
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!session) return { session: null as AttendanceSession | null };
+    return { session: mapSession(session as DbSession) };
+  });
+
 export const CLASS_OPTIONS = [
   { code: "CSCI 491", name: "CSCI 491 - Senior Project I" },
   { code: "CSCI 492", name: "CSCI 492 - Senior Project II" },

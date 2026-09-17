@@ -142,6 +142,7 @@ function InstructorPage() {
         {data.session ? (
           <ActiveSession
             sessionId={data.session.id}
+            code={data.session.code}
             className={data.session.className}
             openedAt={data.session.openedAt}
             attendees={data.attendees}
@@ -363,6 +364,7 @@ function NoSession() {
 
 function ActiveSession({
   sessionId,
+  code,
   className,
   openedAt,
   attendees,
@@ -373,6 +375,7 @@ function ActiveSession({
   onClosed,
 }: {
   sessionId: string;
+  code: string;
   className: string;
   openedAt: string;
   attendees: Attendee[];
@@ -391,7 +394,9 @@ function ActiveSession({
   );
 
   const checkInUrl =
-    typeof window !== "undefined" ? window.location.origin + "/" : "/";
+    typeof window !== "undefined"
+      ? `${window.location.origin}/s/${code}`
+      : `/s/${code}`;
 
   const copyLink = async () => {
     try {
@@ -460,7 +465,7 @@ function ActiveSession({
       <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Check-in link
+            Check-in link for session {code}
           </p>
           <p className="mt-1 truncate font-mono text-sm text-foreground">
             {checkInUrl}

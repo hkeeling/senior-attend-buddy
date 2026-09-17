@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InstructorRouteImport } from './routes/instructor'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as SCodeRouteImport } from './routes/s.$code'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const StatsRoute = StatsRouteImport.update({
   path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SCodeRoute = SCodeRouteImport.update({
+  id: '/s/$code',
+  path: '/s/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRoute
   '/stats': typeof StatsRoute
+  '/s/$code': typeof SCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRoute
   '/stats': typeof StatsRoute
+  '/s/$code': typeof SCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRoute
   '/stats': typeof StatsRoute
+  '/s/$code': typeof SCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/instructor' | '/stats'
+  fullPaths: '/' | '/instructor' | '/stats' | '/s/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/instructor' | '/stats'
-  id: '__root__' | '/' | '/instructor' | '/stats'
+  to: '/' | '/instructor' | '/stats' | '/s/$code'
+  id: '__root__' | '/' | '/instructor' | '/stats' | '/s/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InstructorRoute: typeof InstructorRoute
   StatsRoute: typeof StatsRoute
+  SCodeRoute: typeof SCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/s/$code': {
+      id: '/s/$code'
+      path: '/s/$code'
+      fullPath: '/s/$code'
+      preLoaderRoute: typeof SCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InstructorRoute: InstructorRoute,
   StatsRoute: StatsRoute,
+  SCodeRoute: SCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
