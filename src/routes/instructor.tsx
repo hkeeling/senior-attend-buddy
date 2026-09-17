@@ -465,7 +465,7 @@ function ActiveSession({
       <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Check-in link
+            Check-in link for session {code}
           </p>
           <p className="mt-1 truncate font-mono text-sm text-foreground">
             {checkInUrl}
