@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX sessions_one_open_per_course ON public.sessions ((CASE WHEN class_name = 'Senior Project 1' THEN 'CSCI 491 - Senior Project I' ELSE class_name END)) WHERE closed_at IS NULL;
