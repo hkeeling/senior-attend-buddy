@@ -109,10 +109,10 @@ function InstructorPage() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-              Attendance
+              {data.session?.className ?? "Attendance"}
             </p>
             <h1 className="font-display text-xl font-semibold text-foreground">
-              {data.session?.className ?? "Courses"}
+              Admin Dashboard
             </h1>
           </div>
           <div className="flex gap-2">
