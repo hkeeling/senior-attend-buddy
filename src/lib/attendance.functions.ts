@@ -59,7 +59,7 @@ function mapSession(row: DbSession): AttendanceSession {
   return {
     id: row.id,
     code: row.code,
-    className: row.class_name,
+    className: row.class_name === "Senior Project 1" ? "CSCI 491 - Senior Project I" : row.class_name,
     openedAt: row.opened_at,
     closedAt: row.closed_at,
   };
@@ -78,30 +78,22 @@ function mapAttendee(row: DbCheckIn): Attendee {
 export const getActiveSession = createServerFn({ method: "GET" }).handler(
   async () => {
     const supabase = publicClient();
-    const { data: session, error } = await supabase
+    const { data: rows, error } = await supabase
       .from("sessions")
       .select("id, code, class_name, opened_at, closed_at")
       .is("closed_at", null)
-      .order("opened_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("opened_at", { ascending: false });
     if (error) throw new Error(error.message);
-    if (!session) {
-      return {
-        session: null as AttendanceSession | null,
-        attendees: [] as Attendee[],
-      };
-    }
-    const { data: checkIns, error: ciError } = await supabase
-      .from("check_ins")
-      .select("id, name, student_id, comment, checked_in_at")
-      .eq("session_id", session.id)
-      .order("checked_in_at", { ascending: true });
-    if (ciError) throw new Error(ciError.message);
-    return {
-      session: mapSession(session as DbSession),
-      attendees: (checkIns ?? []).map(mapAttendee),
-    };
+    const sessions = await Promise.all((rows ?? []).map(async (row) => {
+      const { data: checkIns, error: ciError } = await supabase
+        .from("check_ins")
+        .select("id, name, student_id, comment, checked_in_at")
+        .eq("session_id", row.id)
+        .order("checked_in_at", { ascending: true });
+      if (ciError) throw new Error(ciError.message);
+      return { session: mapSession(row as DbSession), attendees: (checkIns ?? []).map(mapAttendee) };
+    }));
+    return { sessions, session: sessions[0]?.session ?? null, attendees: sessions[0]?.attendees ?? [] };
   }
 );
 
@@ -148,6 +140,9 @@ export const openSession = createServerFn({ method: "POST" })
         .single();
       if (!error) return mapSession(row as DbSession);
       if (error.code !== "23505") throw new Error(error.message);
+      if (error.message.includes("sessions_one_open_per_course")) {
+        throw new Error("This course already has an open session. End it before opening another.");
+      }
     }
     throw new Error("Could not open a session, please try again.");
   });

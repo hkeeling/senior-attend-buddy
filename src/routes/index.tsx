@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getActiveSession } from "@/lib/attendance.functions";
 import { CheckInForm, AdminUnlock } from "@/components/check-in-form";
@@ -56,10 +56,21 @@ function CheckInPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
-          {data.session?.className ?? "Class attendance"}
+          {data.sessions.length === 1 ? data.session?.className : "Class attendance"}
         </p>
 
-        {data.session ? (
+        {data.sessions.length > 1 ? (
+          <div className="mt-4 space-y-3">
+            <h1 className="font-display text-2xl font-semibold">Choose your class</h1>
+            {data.sessions.map(({ session }) => (
+              <Link key={session.id} to="/s/$code" params={{ code: session.code }}
+                className="block rounded-xl border border-border bg-card p-5 font-semibold text-foreground hover:bg-accent">
+                {session.className}
+              </Link>
+            ))}
+            <AdminUnlock className="mt-8" />
+          </div>
+        ) : data.session ? (
           <CheckInForm sessionId={data.session.id} className="mt-4" />
         ) : (
           <div className="mt-4 rounded-2xl border border-border bg-card p-8 text-center">
