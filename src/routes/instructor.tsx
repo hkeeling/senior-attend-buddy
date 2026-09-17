@@ -142,6 +142,7 @@ function InstructorPage() {
         {data.session ? (
           <ActiveSession
             sessionId={data.session.id}
+            code={data.session.code}
             className={data.session.className}
             openedAt={data.session.openedAt}
             attendees={data.attendees}
