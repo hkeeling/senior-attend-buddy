@@ -337,10 +337,7 @@ function ActiveSession({
     new Date(openedAt).toLocaleDateString("en-CA")
   );
 
-  const checkInUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/s/${code}`
-      : `/s/${code}`;
+  const checkInUrl = sessionCheckInUrl(code);
 
   const copyLink = async () => {
     try {
