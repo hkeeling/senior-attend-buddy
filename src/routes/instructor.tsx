@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
+import { sessionCheckInUrl } from "@/lib/share-url";
 import {
   getActiveSession,
   listSessions,
@@ -337,10 +338,7 @@ function ActiveSession({
     new Date(openedAt).toLocaleDateString("en-CA")
   );
 
-  const checkInUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/s/${code}`
-      : `/s/${code}`;
+  const checkInUrl = sessionCheckInUrl(code);
 
   const copyLink = async () => {
     try {
