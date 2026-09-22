@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
+import { sessionCheckInUrl } from "@/lib/share-url";
 import {
   getActiveSession,
   listSessions,
