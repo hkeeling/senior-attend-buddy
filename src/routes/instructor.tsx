@@ -462,45 +462,45 @@ function ActiveSession({
           </svg>
         </button>
         {showRoster && (
-          <div className="border-t border-border">
+          <div className="border-t border-accent bg-accent">
             <div className="flex items-center justify-between px-5 py-3">
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
                 Attendees
               </span>
               <button
                 onClick={handleExport}
                 disabled={attendees.length === 0}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+                className="rounded-lg border border-primary/30 bg-accent px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
               >
                 Download CSV
               </button>
             </div>
             {attendees.length === 0 ? (
-              <p className="px-5 pb-10 text-center text-sm text-muted-foreground">
+              <p className="px-5 pb-10 text-center text-sm text-primary/80">
                 Nobody has checked in yet.
               </p>
             ) : (
-              <ul className="divide-y divide-border px-5 pb-2">
+              <ul className="divide-y divide-primary/15 px-5 pb-2">
                 {attendees.map((a, i) => (
                   <li key={a.id} className="flex items-center gap-3 py-3">
-                    <span className="w-6 shrink-0 font-mono text-xs text-muted-foreground">
+                    <span className="w-6 shrink-0 font-mono text-xs text-primary/70">
                       {i + 1}
                     </span>
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent font-mono text-xs font-semibold text-accent-foreground">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary font-mono text-xs font-semibold text-accent">
                       {initials(a.name)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
+                      <p className="truncate text-sm font-medium text-primary">
                         {a.name}
                       </p>
-                      <p className="truncate font-mono text-xs text-muted-foreground">
+                      <p className="truncate font-mono text-xs text-primary/75">
                         {a.studentId}
                         {a.comment ? (
                           <span className="font-sans"> · {a.comment}</span>
                         ) : null}
                       </p>
                     </div>
-                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                    <span className="shrink-0 font-mono text-xs text-primary/75">
                       {formatTime(a.checkedInAt)}
                     </span>
                   </li>
@@ -631,9 +631,9 @@ function SessionAttendees({ sessionId }: { sessionId: string }) {
   const { data: attendees } = useSuspenseQuery(query);
 
   return (
-    <div className="border-t border-border bg-background/50">
+    <div className="border-t border-accent bg-accent">
       <div className="flex items-center justify-between px-5 py-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
           Attendees
         </span>
         <button
@@ -644,31 +644,31 @@ function SessionAttendees({ sessionId }: { sessionId: string }) {
             )
           }
           disabled={attendees.length === 0}
-          className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+          className="rounded-lg border border-primary/30 bg-accent px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
         >
           Download CSV
         </button>
       </div>
       {attendees.length === 0 ? (
-        <p className="px-5 pb-5 text-sm text-muted-foreground">
+        <p className="px-5 pb-5 text-sm text-primary/80">
           No one checked in to this session.
         </p>
       ) : (
-        <ul className="divide-y divide-border px-5 pb-2">
+        <ul className="divide-y divide-primary/15 px-5 pb-2">
           {attendees.map((a) => (
             <li key={a.id} className="flex items-center gap-3 py-2.5">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
+                <p className="truncate text-sm font-medium text-primary">
                   {a.name}
                 </p>
-                <p className="truncate font-mono text-xs text-muted-foreground">
+                <p className="truncate font-mono text-xs text-primary/75">
                   {a.studentId}
                   {a.comment ? (
                     <span className="font-sans"> · {a.comment}</span>
                   ) : null}
                 </p>
               </div>
-              <span className="shrink-0 font-mono text-xs text-muted-foreground">
+              <span className="shrink-0 font-mono text-xs text-primary/75">
                 {formatTime(a.checkedInAt)}
               </span>
             </li>
