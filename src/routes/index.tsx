@@ -31,13 +31,15 @@ export const Route = createFileRoute("/")({
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(openSessionsQuery),
   component: CheckInPage,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="max-w-sm text-center">
         <h1 className="font-display text-2xl font-semibold text-foreground">
           Couldn't load check-in
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : "Something went wrong."}
+        </p>
         <a
           href="/"
           className="mt-6 inline-block rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"

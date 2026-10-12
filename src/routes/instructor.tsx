@@ -100,6 +100,12 @@ function InstructorPage() {
           </div>
           <div className="flex gap-2">
             <a
+              href="/admin"
+              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+            >
+              Instructors
+            </a>
+            <a
               href="/stats"
               className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
             >
