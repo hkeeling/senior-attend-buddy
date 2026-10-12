@@ -1,14 +1,7 @@
-import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { checkIn, type Attendee } from "@/lib/attendance.functions";
-
-const ADMIN_NAME = "harry keeling";
-
-export function isAdminName(value: string) {
-  return value.trim().replace(/\s+/g, " ").toLowerCase() === ADMIN_NAME;
-}
 
 const inputClass =
   "w-full rounded-xl border border-input bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground/70 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30";
@@ -25,7 +18,6 @@ export function CheckInForm({
   subtitle?: string;
 }) {
   const checkInFn = useServerFn(checkIn);
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [name, setName] = useState("");
@@ -71,10 +63,6 @@ export function CheckInForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isAdminName(name)) {
-      navigate({ to: "/instructor" });
-      return;
-    }
     if (!name.trim() || !studentId.trim()) {
       setError("Please fill in your name and student ID.");
       return;
@@ -87,7 +75,7 @@ export function CheckInForm({
         data: { sessionId, name, studentId, comment: comment || undefined },
       });
       setDone(attendee);
-      queryClient.invalidateQueries({ queryKey: ["active-session"] });
+      queryClient.invalidateQueries({ queryKey: ["open-sessions"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setSubmitting(false);
@@ -165,48 +153,12 @@ export function CheckInForm({
   );
 }
 
-export function AdminUnlock({ className }: { className?: string }) {
-  const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
+export function InstructorLink({ className }: { className?: string }) {
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (isAdminName(name)) {
-          navigate({ to: "/instructor" });
-          return;
-        }
-        setError("Check-in isn't open yet — please wait for your instructor.");
-      }}
-      className={`border-t border-border pt-6 text-left ${className ?? ""}`}
-    >
-      <label className="block">
-        <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-          Full name
-        </span>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Jane Doe"
-          maxLength={80}
-          autoComplete="name"
-          className={inputClass}
-        />
-      </label>
-      {error && (
-        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
-          {error}
-        </p>
-      )}
-      <button
-        type="submit"
-        className="mt-4 w-full rounded-xl bg-primary px-4 py-4 text-base font-semibold text-primary-foreground transition hover:brightness-110 active:scale-[0.99]"
-      >
-        I'm here
-      </button>
-    </form>
+    <div className={`border-t border-border pt-6 text-center ${className ?? ""}`}>
+      <a href="/login" className="text-sm text-muted-foreground hover:text-foreground">
+        Instructor sign-in
+      </a>
+    </div>
   );
 }

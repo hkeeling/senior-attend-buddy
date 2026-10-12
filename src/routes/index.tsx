@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { getActiveSession } from "@/lib/attendance.functions";
-import { CheckInForm, AdminUnlock } from "@/components/check-in-form";
+import { getOpenSessions } from "@/lib/attendance.functions";
+import { CheckInForm, InstructorLink } from "@/components/check-in-form";
 
-const activeSessionQuery = queryOptions({
-  queryKey: ["active-session"],
-  queryFn: () => getActiveSession(),
+const openSessionsQuery = queryOptions({
+  queryKey: ["open-sessions"],
+  queryFn: () => getOpenSessions(),
   refetchInterval: 8000,
 });
 
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(activeSessionQuery),
+  loader: ({ context }) => context.queryClient.ensureQueryData(openSessionsQuery),
   component: CheckInPage,
   errorComponent: ({ error }) => (
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
@@ -50,28 +50,29 @@ export const Route = createFileRoute("/")({
 });
 
 function CheckInPage() {
-  const { data } = useSuspenseQuery(activeSessionQuery);
+  const { data: sessions } = useSuspenseQuery(openSessionsQuery);
+  const session = sessions.length === 1 ? sessions[0] : null;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
-          {data.sessions.length === 1 ? data.session?.className : "Class attendance"}
+          {session ? session.className : "Class attendance"}
         </p>
 
-        {data.sessions.length > 1 ? (
+        {sessions.length > 1 ? (
           <div className="mt-4 space-y-3">
             <h1 className="font-display text-2xl font-semibold">Choose your class</h1>
-            {data.sessions.map(({ session }) => (
+            {sessions.map((session) => (
               <Link key={session.id} to="/s/$code" params={{ code: session.code }}
                 className="block rounded-xl border border-border bg-card p-5 font-semibold text-foreground hover:bg-accent">
                 {session.className}
               </Link>
             ))}
-            <AdminUnlock className="mt-8" />
+            <InstructorLink className="mt-8" />
           </div>
-        ) : data.session ? (
-          <CheckInForm sessionId={data.session.id} className="mt-4" />
+        ) : session ? (
+          <CheckInForm sessionId={session.id} className="mt-4" />
         ) : (
           <div className="mt-4 rounded-2xl border border-border bg-card p-8 text-center">
             <h1 className="font-display text-2xl font-semibold text-foreground">
@@ -87,7 +88,7 @@ function CheckInPage() {
             >
               Refresh
             </a>
-            <AdminUnlock className="mt-8" />
+            <InstructorLink className="mt-8" />
           </div>
 
         )}

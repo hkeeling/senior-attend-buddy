@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getSessionByCode } from "@/lib/attendance.functions";
-import { CheckInForm, AdminUnlock } from "@/components/check-in-form";
+import { CheckInForm, InstructorLink } from "@/components/check-in-form";
 
 const sessionByCodeQuery = (code: string) =>
   queryOptions({
@@ -72,7 +72,7 @@ function SessionCheckInPage() {
                 ? `${session.className} is closed, so check-in is no longer available.`
                 : "That check-in link doesn't match an open session. Ask your instructor for the current link."}
             </p>
-            <AdminUnlock className="mt-8" />
+            <InstructorLink className="mt-8" />
           </div>
         )}
         <p className="mt-8 text-center text-xs text-muted-foreground">

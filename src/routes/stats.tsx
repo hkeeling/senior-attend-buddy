@@ -10,7 +10,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { SignOutButton } from "@/components/sign-out-button";
 import { getAttendanceStats } from "@/lib/attendance.functions";
+import { requireSignedIn } from "@/lib/auth";
 
 const statsQuery = queryOptions({
   queryKey: ["attendance-stats"],
@@ -20,6 +22,7 @@ const statsQuery = queryOptions({
 
 export const Route = createFileRoute("/stats")({
   ssr: false,
+  beforeLoad: ({ location }) => requireSignedIn(location),
   head: () => ({
     meta: [
       { title: "Attendance Stats — Senior Project 1" },
@@ -74,12 +77,15 @@ function StatsPage() {
               Stats &amp; trends
             </h1>
           </div>
-          <a
-            href="/instructor"
-            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
-          >
-            Back to sessions
-          </a>
+          <div className="flex gap-2">
+            <a
+              href="/instructor"
+              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+            >
+              Back to sessions
+            </a>
+            <SignOutButton />
+          </div>
         </div>
       </header>
 

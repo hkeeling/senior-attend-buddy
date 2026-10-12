@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InstructorRouteImport } from './routes/instructor'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SCodeRouteImport } from './routes/s.$code'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const InstructorRoute = InstructorRouteImport.update({
   id: '/instructor',
   path: '/instructor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StatsRoute = StatsRouteImport.update({
@@ -38,12 +44,14 @@ const SCodeRoute = SCodeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRoute
+  '/login': typeof LoginRoute
   '/stats': typeof StatsRoute
   '/s/$code': typeof SCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRoute
+  '/login': typeof LoginRoute
   '/stats': typeof StatsRoute
   '/s/$code': typeof SCodeRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRoute
+  '/login': typeof LoginRoute
   '/stats': typeof StatsRoute
   '/s/$code': typeof SCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/instructor' | '/stats' | '/s/$code'
+  fullPaths: '/' | '/instructor' | '/login' | '/stats' | '/s/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/instructor' | '/stats' | '/s/$code'
-  id: '__root__' | '/' | '/instructor' | '/stats' | '/s/$code'
+  to: '/' | '/instructor' | '/login' | '/stats' | '/s/$code'
+  id: '__root__' | '/' | '/instructor' | '/login' | '/stats' | '/s/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InstructorRoute: typeof InstructorRoute
+  LoginRoute: typeof LoginRoute
   StatsRoute: typeof StatsRoute
   SCodeRoute: typeof SCodeRoute
 }
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/instructor'
       fullPath: '/instructor'
       preLoaderRoute: typeof InstructorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stats': {
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InstructorRoute: InstructorRoute,
+  LoginRoute: LoginRoute,
   StatsRoute: StatsRoute,
   SCodeRoute: SCodeRoute,
 }

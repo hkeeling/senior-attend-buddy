@@ -7,7 +7,9 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SignOutButton } from "@/components/sign-out-button";
 import { QRCodeSVG } from "qrcode.react";
+import { requireSignedIn } from "@/lib/auth";
 import { sessionCheckInUrl } from "@/lib/share-url";
 import {
   getActiveSession,
@@ -33,6 +35,7 @@ const sessionsQuery = queryOptions({
 
 export const Route = createFileRoute("/instructor")({
   ssr: false,
+  beforeLoad: ({ location }) => requireSignedIn(location),
   head: () => ({
     meta: [
       { title: "Admin Dashboard — Course Attendance" },
@@ -128,6 +131,7 @@ function InstructorPage() {
             >
               Student view
             </a>
+            <SignOutButton />
           </div>
         </div>
       </header>
