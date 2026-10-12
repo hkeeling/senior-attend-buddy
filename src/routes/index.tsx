@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(openSessionsQuery),
   component: CheckInPage,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="max-w-sm text-center">
         <h1 className="font-display text-2xl font-semibold text-foreground">
