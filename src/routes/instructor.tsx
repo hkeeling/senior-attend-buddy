@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/components/sign-out-button";
 import { QRCodeSVG } from "qrcode.react";
 import { requireSignedIn } from "@/lib/auth";
+import { attendanceFilename, downloadCsv, toCsv } from "@/lib/csv";
 import { sessionCheckInUrl } from "@/lib/share-url";
 import {
   getActiveSession,
@@ -70,27 +71,6 @@ function formatDate(iso: string) {
     month: "short",
     day: "numeric",
   });
-}
-
-function toCsv(attendees: Attendee[]) {
-  const header = "Name,Student ID,Checked In,Comment";
-  const rows = attendees.map((a) => {
-    const time = new Date(a.checkedInAt).toLocaleString();
-    const esc = (v: string | null) =>
-      `"${(v ?? "").replace(/"/g, '""')}"`;
-    return [esc(a.name), esc(a.studentId), esc(time), esc(a.comment)].join(",");
-  });
-  return [header, ...rows].join("\n");
-}
-
-function downloadCsv(filename: string, csv: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 function initials(name: string) {
@@ -355,10 +335,7 @@ function ActiveSession({
   };
 
   const handleExport = () =>
-    downloadCsv(
-      `${className.replace(/\s+/g, "-").toLowerCase()}-attendance-${new Date().toISOString().slice(0, 10)}.csv`,
-      toCsv(attendees)
-    );
+    downloadCsv(attendanceFilename(className, openedAt), toCsv(attendees));
 
   const handleClose = async () => {
     setClosing(true);
@@ -617,7 +594,13 @@ function PastSessions({
                   {s.closedAt ? `ended ${formatTime(s.closedAt)}` : "open"}
                 </span>
               </button>
-              {expandedId === s.id && <SessionAttendees sessionId={s.id} />}
+              {expandedId === s.id && (
+                <SessionAttendees
+                  sessionId={s.id}
+                  className={s.className}
+                  sessionDate={s.closedAt ?? s.openedAt}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -627,7 +610,15 @@ function PastSessions({
 }
 
 
-function SessionAttendees({ sessionId }: { sessionId: string }) {
+function SessionAttendees({
+  sessionId,
+  className,
+  sessionDate,
+}: {
+  sessionId: string;
+  className: string;
+  sessionDate: string;
+}) {
   const query = queryOptions({
     queryKey: ["session-check-ins", sessionId],
     queryFn: () => getSessionCheckIns({ data: { sessionId } }),
@@ -642,10 +633,7 @@ function SessionAttendees({ sessionId }: { sessionId: string }) {
         </span>
         <button
           onClick={() =>
-            downloadCsv(
-              `senior-project-1-${sessionId.slice(0, 8)}.csv`,
-              toCsv(attendees)
-            )
+            downloadCsv(attendanceFilename(className, sessionDate), toCsv(attendees))
           }
           disabled={attendees.length === 0}
           className="rounded-lg border border-primary/30 bg-accent px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
