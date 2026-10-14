@@ -115,15 +115,15 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
+    <div className="flex flex-1 flex-col items-center justify-center bg-background px-4 py-10">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm"
       >
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           Attendance
         </p>
-        <h1 className="mt-1 font-display text-3xl font-semibold leading-tight text-foreground">
+        <h1 className="mt-1 font-display text-3xl font-semibold leading-tight text-primary">
           {mode === "signin" ? "Instructor sign-in" : "Create your account"}
         </h1>
 
@@ -155,7 +155,7 @@ function LoginPage() {
 
         <div className="my-5 flex items-center gap-3">
           <span className="h-px flex-1 bg-border" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             or with email
           </span>
           <span className="h-px flex-1 bg-border" />
@@ -164,7 +164,7 @@ function LoginPage() {
         <div className="space-y-4">
           {mode === "signup" && (
             <label className="block">
-              <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+              <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 Display name
               </span>
               <input
@@ -179,7 +179,7 @@ function LoginPage() {
             </label>
           )}
           <label className="block">
-            <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+            <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Email
             </span>
             <input
@@ -192,7 +192,7 @@ function LoginPage() {
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+            <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Password
             </span>
             <input

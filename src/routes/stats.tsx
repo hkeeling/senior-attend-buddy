@@ -66,14 +66,14 @@ function StatsPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex-1 bg-background">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Attendance
             </p>
-            <h1 className="font-display text-xl font-semibold text-foreground">
+            <h1 className="font-display text-xl font-semibold text-primary">
               Stats &amp; trends
             </h1>
           </div>
@@ -102,7 +102,7 @@ function StatsPage() {
 
         <section className="mt-8 rounded-2xl border border-border bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-display text-lg font-semibold text-foreground">
+            <h2 className="font-display text-lg font-semibold text-primary">
               Attendance trend
             </h2>
             <div className="flex rounded-xl border border-border p-1">
@@ -222,10 +222,10 @@ function StatsPage() {
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-1 font-display text-2xl font-semibold text-foreground">
+      <p className="mt-1 font-display text-2xl font-semibold text-primary">
         {value}
       </p>
     </div>

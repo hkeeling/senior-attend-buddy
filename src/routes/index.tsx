@@ -32,9 +32,9 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(openSessionsQuery),
   component: CheckInPage,
   errorComponent: ({ error }: { error: unknown }) => (
-    <div className="flex min-h-screen items-center justify-center bg-background px-6">
+    <div className="flex flex-1 items-center justify-center bg-background px-6">
       <div className="max-w-sm text-center">
-        <h1 className="font-display text-2xl font-semibold text-foreground">
+        <h1 className="font-display text-2xl font-semibold text-primary">
           Couldn't load check-in
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -56,9 +56,9 @@ function CheckInPage() {
   const session = sessions.length === 1 ? sessions[0] : null;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
+    <div className="flex flex-1 flex-col items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           {session ? session.className : "Class attendance"}
         </p>
 
@@ -77,7 +77,7 @@ function CheckInPage() {
           <CheckInForm sessionId={session.id} className="mt-4" />
         ) : (
           <div className="mt-4 rounded-2xl border border-border bg-card p-8 text-center">
-            <h1 className="font-display text-2xl font-semibold text-foreground">
+            <h1 className="font-display text-2xl font-semibold text-primary">
               Check-in isn't open yet
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
