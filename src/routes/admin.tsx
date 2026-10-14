@@ -36,14 +36,14 @@ function AdminPage() {
   const { data: accounts } = useSuspenseQuery(accountsQuery);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex-1 bg-background">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Attendance
             </p>
-            <h1 className="font-display text-xl font-semibold text-foreground">
+            <h1 className="font-display text-xl font-semibold text-primary">
               Manage instructors
             </h1>
           </div>
@@ -132,7 +132,7 @@ function AccountRow({ account }: { account: AccountInfo }) {
         {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
       </div>
       {account.isInstructor && (
-        <span className="rounded-full bg-primary/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+        <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
           Instructor
         </span>
       )}

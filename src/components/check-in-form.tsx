@@ -47,7 +47,7 @@ export function CheckInForm({
             />
           </svg>
         </div>
-        <h1 className="mt-4 font-display text-2xl font-semibold text-foreground">
+        <h1 className="mt-4 font-display text-2xl font-semibold text-primary">
           You're checked in, {done.name.split(" ")[0]}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -87,14 +87,14 @@ export function CheckInForm({
       onSubmit={handleSubmit}
       className={`rounded-2xl border border-border bg-card p-6 shadow-sm ${className ?? ""}`}
     >
-      <h1 className="font-display text-3xl font-semibold leading-tight text-foreground">
+      <h1 className="font-display text-3xl font-semibold leading-tight text-primary">
         {title}
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
 
       <div className="mt-6 space-y-4">
         <label className="block">
-          <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Full name
           </span>
           <input
@@ -108,7 +108,7 @@ export function CheckInForm({
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Student ID
           </span>
           <input
@@ -121,7 +121,7 @@ export function CheckInForm({
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Comment{" "}
             <span className="normal-case tracking-normal">(optional)</span>
           </span>

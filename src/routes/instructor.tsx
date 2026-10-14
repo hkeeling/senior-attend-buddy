@@ -87,14 +87,14 @@ function InstructorPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex-1 bg-background">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Attendance
             </p>
-            <h1 className="font-display text-xl font-semibold text-foreground">
+            <h1 className="font-display text-xl font-semibold text-primary">
               Admin Dashboard
             </h1>
           </div>
@@ -181,7 +181,7 @@ function CourseOverview({
   return (
     <section className="mb-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-semibold text-foreground">
+        <h2 className="font-display text-xl font-semibold text-primary">
           Your courses
         </h2>
 
@@ -200,15 +200,15 @@ function CourseOverview({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                     {c.code}
                   </p>
-                  <h3 className="mt-1 font-display text-lg font-semibold text-foreground">
+                  <h3 className="mt-1 font-display text-lg font-semibold text-primary">
                     {c.name.replace(`${c.code} - `, "")}
                   </h3>
                 </div>
                 {isActive && (
-                  <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+                  <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
                     Live
                   </span>
                 )}
@@ -262,7 +262,7 @@ function NoSession() {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-10 text-center">
-      <h2 className="font-display text-2xl font-semibold text-foreground">
+      <h2 className="font-display text-2xl font-semibold text-primary">
         No session is open
       </h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
@@ -272,7 +272,7 @@ function NoSession() {
       <div className="mx-auto mt-6 max-w-sm text-left">
         <label
           htmlFor="class-select"
-          className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+          className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
         >
           Class
         </label>
@@ -374,7 +374,7 @@ function ActiveSession({
     <section className="mb-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-2xl font-semibold text-foreground">
+          <h2 className="font-display text-2xl font-semibold text-primary">
             {className}
           </h2>
           <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
@@ -393,7 +393,7 @@ function ActiveSession({
 
       <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Check-in link for session {code}
           </p>
           <p className="mt-1 truncate font-mono text-sm text-foreground">
@@ -431,7 +431,7 @@ function ActiveSession({
             <span className="text-sm font-semibold uppercase tracking-wide text-foreground">
               Present now
             </span>
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
               {attendees.length} checked in
             </span>
           </span>
@@ -451,7 +451,7 @@ function ActiveSession({
         {showRoster && (
           <div className="border-t border-accent bg-accent">
             <div className="flex items-center justify-between px-5 py-3">
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
                 Attendees
               </span>
               <button
@@ -502,7 +502,7 @@ function ActiveSession({
         <div>
           <label
             htmlFor={`close-date-${sessionId}`}
-            className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+            className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
           >
             Class date
           </label>
@@ -555,7 +555,7 @@ function PastSessions({
   return (
     <section className="mt-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-semibold text-foreground">
+        <h2 className="font-display text-xl font-semibold text-primary">
           Past sessions
         </h2>
         <select
@@ -634,7 +634,7 @@ function SessionAttendees({
   return (
     <div className="border-t border-accent bg-accent">
       <div className="flex items-center justify-between px-5 py-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
           Attendees
         </span>
         <button

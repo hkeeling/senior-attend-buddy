@@ -47,9 +47,9 @@ function SessionCheckInPage() {
   const session = data.session;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
+    <div className="flex flex-1 flex-col items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           {session ? `Session ${session.code}` : "Class attendance"}
         </p>
 
@@ -64,7 +64,7 @@ function SessionCheckInPage() {
           </>
         ) : (
           <div className="mt-4 rounded-2xl border border-border bg-card p-8 text-center">
-            <h1 className="font-display text-2xl font-semibold text-foreground">
+            <h1 className="font-display text-2xl font-semibold text-primary">
               {session ? "This session has ended" : "Session not found"}
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
