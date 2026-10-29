@@ -488,7 +488,7 @@ function ActiveSession({
                       </p>
                     </div>
                     <span className="shrink-0 font-mono text-xs text-primary/75">
-                      {formatTime(a.checkedInAt)}
+                      {a.isLate ? (<span className="mr-2 rounded-full bg-primary px-2 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-wide text-accent">Late</span>) : null}{formatTime(a.checkedInAt)}
                     </span>
                   </li>
                 ))}
@@ -667,7 +667,7 @@ function SessionAttendees({
                 </p>
               </div>
               <span className="shrink-0 font-mono text-xs text-primary/75">
-                {formatTime(a.checkedInAt)}
+                {a.isLate ? (<span className="mr-2 rounded-full bg-primary px-2 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-wide text-accent">Late</span>) : null}{formatTime(a.checkedInAt)}
               </span>
             </li>
           ))}
