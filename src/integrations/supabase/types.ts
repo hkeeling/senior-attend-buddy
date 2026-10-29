@@ -19,6 +19,7 @@ export type Database = {
           checked_in_at: string
           comment: string | null
           id: string
+          is_late: boolean
           name: string
           session_id: string
           student_id: string
@@ -27,6 +28,7 @@ export type Database = {
           checked_in_at?: string
           comment?: string | null
           id?: string
+          is_late?: boolean
           name: string
           session_id: string
           student_id: string
@@ -35,6 +37,7 @@ export type Database = {
           checked_in_at?: string
           comment?: string | null
           id?: string
+          is_late?: boolean
           name?: string
           session_id?: string
           student_id?: string
