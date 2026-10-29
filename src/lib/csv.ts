@@ -22,9 +22,9 @@ function formatTimestamp(iso: string) {
 }
 
 export function toCsv(attendees: Attendee[]) {
-  const header = "Name,Student ID,Checked In,Comment";
+  const header = "Name,Student ID,Checked In,Status,Comment";
   const rows = attendees.map((a) =>
-    [cell(a.name), cell(a.studentId), cell(formatTimestamp(a.checkedInAt)), cell(a.comment)].join(
+    [cell(a.name), cell(a.studentId), cell(formatTimestamp(a.checkedInAt)), cell(a.isLate ? "Late" : "On time"), cell(a.comment)].join(
       ",",
     ),
   );

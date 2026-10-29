@@ -16,6 +16,7 @@ export interface Attendee {
   studentId: string;
   comment: string | null;
   checkedInAt: string;
+  isLate: boolean;
 }
 
 export interface SessionSummary extends AttendanceSession {
@@ -36,6 +37,7 @@ interface DbCheckIn {
   student_id: string;
   comment: string | null;
   checked_in_at: string;
+  is_late: boolean;
 }
 
 // Service-role client for the public (student) functions only. It bypasses RLS,
@@ -63,6 +65,7 @@ function mapAttendee(row: DbCheckIn): Attendee {
     studentId: row.student_id,
     comment: row.comment,
     checkedInAt: row.checked_in_at,
+    isLate: row.is_late,
   };
 }
 
@@ -94,7 +97,7 @@ export const getActiveSession = createServerFn({ method: "GET" })
     const sessions = await Promise.all((rows ?? []).map(async (row) => {
       const { data: checkIns, error: ciError } = await supabase
         .from("check_ins")
-        .select("id, name, student_id, comment, checked_in_at")
+        .select("id, name, student_id, comment, checked_in_at, is_late")
         .eq("session_id", row.id)
         .order("checked_in_at", { ascending: true });
       if (ciError) throw new Error(ciError.message);
@@ -217,7 +220,7 @@ export const checkIn = createServerFn({ method: "POST" })
         student_id: data.studentId,
         comment: data.comment,
       })
-      .select("id, name, student_id, comment, checked_in_at")
+      .select("id, name, student_id, comment, checked_in_at, is_late")
       .single();
     if (error) {
       if (error.code === "23505") {
@@ -261,7 +264,7 @@ export const getSessionCheckIns = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: checkIns, error } = await supabase
       .from("check_ins")
-      .select("id, name, student_id, comment, checked_in_at")
+      .select("id, name, student_id, comment, checked_in_at, is_late")
       .eq("session_id", data.sessionId)
       .order("checked_in_at", { ascending: true });
     if (error) throw new Error(error.message);
